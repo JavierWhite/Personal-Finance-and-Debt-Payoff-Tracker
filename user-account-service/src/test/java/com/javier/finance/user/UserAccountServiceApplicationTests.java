@@ -12,7 +12,6 @@ import org.springframework.boot.test.context.SpringBootTest;
         "spring.datasource.password=",
         "spring.jpa.hibernate.ddl-auto=create-drop"
 })
-
 class UserAccountServiceApplicationTests {
     @Test
     void contextLoads() {

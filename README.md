@@ -15,23 +15,42 @@ Semester Project for Personal Finance Tracker and Debt payoff using Java 17, Spr
 | Retirement Service | 8084 | finance_retirement | Accounts, contributions, projection |
 | Analytics Service | 8085 | finance_analytics | Monthly snapshots and chart data |
 
-## Checkpoint documents
+## Architecture
 
-- `docs/canonical-data-model.md` contains the canonical model and bounded contexts.
-- `docs/deployment.md` contains the aimed Docker deployment.
-- `postman/Personal-Finance-Tracker.postman_collection.json` contains the REST demo flow.
+Each business microservice uses the required stack:
 
-## Architecture rules
+1. JPA entities saved in MySQL
+2. Spring Data repositories
+3. Service classes for business logic
+4. REST controllers for CRUD operations
 
-- Each business service has an entity, repository, service, and REST controller layer.
+The web dashboard is a separate presentation client. It does not replace the REST APIs.
 
-- Each service owns its database schema.
+## Web dashboard features
 
-- Cross-service ownership uses scalar IDs such as `userId`. There are no JPA relationships across services.
+Open `http://localhost:8080` after the containers start.
 
-- Dev data is inserted by beans marked with `@Profile("dev")`.
+The dashboard supports:
 
-- The analytics service accepts manual monthly snapshots in iteration one. It does not call the other services yet.
+- Create a user account
+- Sign in with username and password
+- Update profile details and account status
+- Delete an account
+- Add and remove gross income records
+- Store income as monthly or yearly gross income
+- Display normalized monthly and yearly income totals
+- Add and remove debt accounts
+- Record debt payments
+- Display total debt and minimum payments
+
+Development sign-in:
+
+```text
+Username: javier
+Password: Password123!
+```
+
+The sign-in flow uses BCrypt password hashing, but it is still a basic local course demonstration. It does not issue JWTs or provide production-grade cross-service authorization.
 
 ## Run with Docker Compose
 

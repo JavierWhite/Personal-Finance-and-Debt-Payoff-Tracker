@@ -106,5 +106,19 @@ services:
       config-service:
         condition: service_healthy
 
+  frontend-service:
+    build:
+      context: .
+      dockerfile: frontend-service/Dockerfile
+    container_name: finance-frontend-service
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      CONFIG_SERVER_URL: http://config-service:8888
+    ports:
+      - "8080:8080"
+    depends_on:
+      - user-account-service
+      - debt-service
+
 volumes:
   finance-mysql-data:

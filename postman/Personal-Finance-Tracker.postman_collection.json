@@ -1,6 +1,6 @@
 {
   "info": {
-    "name": "Personal Finance Tracker, Iteration 1",
+    "name": "Personal Finance Tracker, Iteration",
     "description": "Run requests in order. Tests store created IDs as collection variables.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
@@ -44,9 +44,49 @@
     {
       "key": "snapshotId",
       "value": ""
+    },
+    {
+      "key": "incomeId",
+      "value": ""
     }
   ],
   "item": [
+    {
+      "name": "00 Authentication",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"javier\",\n  \"password\": \"Password123!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{userBaseUrl}}/auth/login",
+              "host": [
+                "{{userBaseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            }
+          }
+        }
+      ]
+    },
     {
       "name": "01 User",
       "item": [
@@ -63,7 +103,7 @@
             "url": "{{userBaseUrl}}/users",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"username\": \"javier.demo\",\n  \"email\": \"javier.demo@example.com\",\n  \"firstName\": \"Javier\",\n  \"lastName\": \"White\",\n  \"active\": true\n}",
+              "raw": "{\n  \"username\": \"javier.demo\",\n  \"email\": \"javier.demo@example.com\",\n  \"firstName\": \"Javier\",\n  \"lastName\": \"White\",\n  \"active\": true,\n  \"password\": \"Password123!\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -98,7 +138,89 @@
       ]
     },
     {
-      "name": "02 Debt",
+      "name": "02 Income",
+      "item": [
+        {
+          "name": "Create yearly income",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set(\"incomeId\", body.id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"source\": \"Primary Job\",\n  \"grossAmount\": 72000.0,\n  \"frequency\": \"YEARLY\",\n  \"effectiveDate\": \"2026-06-01\",\n  \"active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{userBaseUrl}}/incomes",
+              "host": [
+                "{{userBaseUrl}}"
+              ],
+              "path": [
+                "incomes"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get income for user",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{userBaseUrl}}/incomes/user/{{userId}}",
+              "host": [
+                "{{userBaseUrl}}"
+              ],
+              "path": [
+                "incomes",
+                "user",
+                "{{userId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete income",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{userBaseUrl}}/incomes/{{incomeId}}",
+              "host": [
+                "{{userBaseUrl}}"
+              ],
+              "path": [
+                "incomes",
+                "{{incomeId}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 Debt",
       "item": [
         {
           "name": "Create credit card debt",
@@ -181,7 +303,7 @@
       ]
     },
     {
-      "name": "03 Savings",
+      "name": "04 Savings",
       "item": [
         {
           "name": "Create emergency fund",
@@ -264,7 +386,7 @@
       ]
     },
     {
-      "name": "04 Retirement",
+      "name": "05 Retirement",
       "item": [
         {
           "name": "Create Roth IRA",
@@ -336,7 +458,7 @@
       ]
     },
     {
-      "name": "05 Analytics",
+      "name": "06 Analytics",
       "item": [
         {
           "name": "Create monthly snapshot",

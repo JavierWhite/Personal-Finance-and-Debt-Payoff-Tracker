@@ -23,6 +23,7 @@
         <module>savings-service</module>
         <module>retirement-service</module>
         <module>analytics-service</module>
+        <module>frontend-service</module>
     </modules>
 
     <properties>

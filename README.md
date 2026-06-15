@@ -4,8 +4,6 @@ Semester Project for Personal Finance Tracker and Debt payoff using Java 17, Spr
  First simple iteration of a REST-based personal finance system. It uses six Spring Boot applications, one MySQL container with five service-owned databases, Spring Cloud Config, Docker Compose, and a Postman collection.
 
 # ----------------------------------------------------------------------------------------------------
-
-
 ## Services and ports
 
 | Service | Port | Database | Main responsibility |
@@ -26,9 +24,13 @@ Semester Project for Personal Finance Tracker and Debt payoff using Java 17, Spr
 ## Architecture rules
 
 - Each business service has an entity, repository, service, and REST controller layer.
+
 - Each service owns its database schema.
+
 - Cross-service ownership uses scalar IDs such as `userId`. There are no JPA relationships across services.
+
 - Dev data is inserted by beans marked with `@Profile("dev")`.
+
 - The analytics service accepts manual monthly snapshots in iteration one. It does not call the other services yet.
 
 ## Run with Docker Compose
@@ -62,6 +64,7 @@ Delete containers and the MySQL volume when you need a clean database:
 docker compose down -v
 ```
 
+# ----------------------------------------------------------------------------------------------------
 ## Profiles
 
 The Docker Compose file defaults to `dev`.
@@ -94,6 +97,7 @@ $env:SPRING_PROFILES_ACTIVE = "prod"
 docker compose up --build
 ```
 
+# ----------------------------------------------------------------------------------------------------
 ## Local Maven build
 
 Java 17 and Maven are required.
@@ -104,6 +108,7 @@ mvn clean package
 
 For local execution outside Docker, start MySQL and Config Service first. Set `DB_HOST=localhost`. Then run each service with the dev profile.
 
+# ----------------------------------------------------------------------------------------------------
 ## Endpoints
 ### User accounts
 

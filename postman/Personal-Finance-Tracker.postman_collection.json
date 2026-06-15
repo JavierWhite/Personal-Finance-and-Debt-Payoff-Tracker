@@ -1,0 +1,417 @@
+{
+  "info": {
+    "name": "Personal Finance Tracker, Iteration 1",
+    "description": "Run requests in order. Tests store created IDs as collection variables.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "userBaseUrl",
+      "value": "http://localhost:8081"
+    },
+    {
+      "key": "debtBaseUrl",
+      "value": "http://localhost:8082"
+    },
+    {
+      "key": "savingsBaseUrl",
+      "value": "http://localhost:8083"
+    },
+    {
+      "key": "retirementBaseUrl",
+      "value": "http://localhost:8084"
+    },
+    {
+      "key": "analyticsBaseUrl",
+      "value": "http://localhost:8085"
+    },
+    {
+      "key": "userId",
+      "value": ""
+    },
+    {
+      "key": "debtId",
+      "value": ""
+    },
+    {
+      "key": "savingsGoalId",
+      "value": ""
+    },
+    {
+      "key": "retirementAccountId",
+      "value": ""
+    },
+    {
+      "key": "snapshotId",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "01 User",
+      "item": [
+        {
+          "name": "Create user",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{userBaseUrl}}/users",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"javier.demo\",\n  \"email\": \"javier.demo@example.com\",\n  \"firstName\": \"Javier\",\n  \"lastName\": \"White\",\n  \"active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Created', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set('userId', body.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get created user",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{userBaseUrl}}/users/{{userId}}"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "02 Debt",
+      "item": [
+        {
+          "name": "Create credit card debt",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{debtBaseUrl}}/debts",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": {{userId}},\n  \"debtName\": \"Demo Visa\",\n  \"debtType\": \"CREDIT_CARD\",\n  \"originalBalance\": 3000.0,\n  \"currentBalance\": 3000.0,\n  \"interestRate\": 22.0,\n  \"minimumPayment\": 90.0,\n  \"dueDate\": \"2026-07-01\",\n  \"status\": \"ACTIVE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Created', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('debtId', pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Add $250 payment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{debtBaseUrl}}/debts/{{debtId}}/payments",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 250.0,\n  \"paymentDate\": \"2026-06-15\",\n  \"note\": \"First payoff payment\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Balance decreased to 2750', () => pm.expect(Number(pm.response.json().currentBalance)).to.eql(2750));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get debts for user",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{debtBaseUrl}}/debts/user/{{userId}}"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "03 Savings",
+      "item": [
+        {
+          "name": "Create emergency fund",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{savingsBaseUrl}}/savings-goals",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": {{userId}},\n  \"goalName\": \"Emergency Fund\",\n  \"targetAmount\": 5000.0,\n  \"currentAmount\": 0.0,\n  \"targetDate\": \"2027-06-15\",\n  \"status\": \"ACTIVE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Created', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('savingsGoalId', pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Add $500 contribution",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{savingsBaseUrl}}/savings-goals/{{savingsGoalId}}/contributions",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 500.0,\n  \"contributionDate\": \"2026-06-15\",\n  \"note\": \"Initial emergency fund deposit\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Savings equals 500', () => pm.expect(Number(pm.response.json().currentAmount)).to.eql(500));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get savings goals for user",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{savingsBaseUrl}}/savings-goals/user/{{userId}}"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "04 Retirement",
+      "item": [
+        {
+          "name": "Create Roth IRA",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{retirementBaseUrl}}/retirement-accounts",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": {{userId}},\n  \"accountName\": \"Roth IRA\",\n  \"accountType\": \"ROTH_IRA\",\n  \"currentBalance\": 2000.0,\n  \"monthlyContribution\": 150.0,\n  \"expectedAnnualReturn\": 7.0,\n  \"targetRetirementAmount\": 750000.0,\n  \"currentAge\": 35,\n  \"targetRetirementAge\": 65\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Created', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('retirementAccountId', pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Add $150 contribution",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{retirementBaseUrl}}/retirement-accounts/{{retirementAccountId}}/contributions",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 150.0,\n  \"contributionDate\": \"2026-06-15\",\n  \"note\": \"June contribution\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get retirement projection",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{retirementBaseUrl}}/retirement-accounts/{{retirementAccountId}}/projection"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "05 Analytics",
+      "item": [
+        {
+          "name": "Create monthly snapshot",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{analyticsBaseUrl}}/analytics/snapshots",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": {{userId}},\n  \"month\": \"2026-06\",\n  \"totalDebt\": 2750.0,\n  \"totalSavings\": 500.0,\n  \"retirementBalance\": 2150.0,\n  \"monthlyIncome\": 5000.0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Created', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set('snapshotId', body.id);",
+                  "pm.test('Net worth estimate is -100', () => pm.expect(Number(body.netWorthEstimate)).to.eql(-100));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get latest summary",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{analyticsBaseUrl}}/analytics/user/{{userId}}/summary"
+          },
+          "response": []
+        },
+        {
+          "name": "Get debt chart",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{analyticsBaseUrl}}/analytics/user/{{userId}}/debt-chart"
+          },
+          "response": []
+        },
+        {
+          "name": "Get savings chart",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{analyticsBaseUrl}}/analytics/user/{{userId}}/savings-chart"
+          },
+          "response": []
+        },
+        {
+          "name": "Get net worth chart",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{analyticsBaseUrl}}/analytics/user/{{userId}}/net-worth-chart"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

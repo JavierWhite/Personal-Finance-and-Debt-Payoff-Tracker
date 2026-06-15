@@ -1,4 +1,4 @@
-package com.javier.finance.user;
+package com.javier.finance.savings;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -12,8 +12,7 @@ import org.springframework.boot.test.context.SpringBootTest;
         "spring.datasource.password=",
         "spring.jpa.hibernate.ddl-auto=create-drop"
 })
-
-class UserAccountServiceApplicationTests {
+class SavingsServiceApplicationTests {
     @Test
     void contextLoads() {
     }

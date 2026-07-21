@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Personal Finance Tracker</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="site-header">
+    <div>
+        <p class="eyebrow">Personal Finance and Debt Payoff Tracker</p>
+        <h1>Finance Dashboard</h1>
+    </div>
+    <button id="logoutButton" class="button button-secondary hidden" type="button">Sign out</button>
+</header>
+
+<main class="page-shell">
+    <section id="messageBar" class="message hidden" aria-live="polite"></section>
+
+    <section id="authView" class="auth-grid">
+        <article class="panel">
+            <h2>Sign in</h2>
+            <p class="muted">Use the development account or create a new one.</p>
+            <form id="loginForm" class="form-stack">
+                <label>Username
+                    <input id="loginUsername" name="username" value="javier" required>
+                </label>
+                <label>Password
+                    <input id="loginPassword" name="password" type="password" value="Password123!" required>
+                </label>
+                <button class="button" type="submit">Sign in</button>
+            </form>
+        </article>
+
+        <article class="panel">
+            <h2>Create an account</h2>
+            <form id="registerForm" class="form-grid two-column">
+                <label>First name
+                    <input name="firstName" required>
+                </label>
+                <label>Last name
+                    <input name="lastName" required>
+                </label>
+                <label>Username
+                    <input name="username" required>
+                </label>
+                <label>Email
+                    <input name="email" type="email" required>
+                </label>
+                <label class="span-two">Password
+                    <input name="password" type="password" minlength="8" required>
+                </label>
+                <button class="button span-two" type="submit">Create account</button>
+            </form>
+        </article>
+
+        <article class="panel span-two auth-security-panel">
+            <h2>Password reminder</h2>
+            <p class="muted">Create a reset token, then set a new password. For this class demo, the reset token is shown on screen instead of sent by email.</p>
+            <form id="passwordReminderForm" class="form-grid two-column compact-form">
+                <label>Email
+                    <input name="email" type="email" placeholder="javier@example.com" required>
+                </label>
+                <button class="button" type="submit">Create reset token</button>
+            </form>
+            <p id="resetTokenBox" class="reset-token"></p>
+            <form id="passwordResetForm" class="form-grid two-column">
+                <label>Reset token
+                    <input id="resetToken" name="resetToken" required>
+                </label>
+                <label>New password
+                    <input name="newPassword" type="password" minlength="8" required>
+                </label>
+                <button class="button span-two" type="submit">Reset password</button>
+            </form>
+        </article>
+    </section>
+
+    <section id="dashboardView" class="hidden">
+        <div class="welcome-row">
+            <div>
+                <p class="eyebrow">Signed in as</p>
+                <h2 id="welcomeName">User</h2>
+            </div>
+            <p class="muted">This interface calls the User Account and Debt REST services. Data refreshes after each change and every 15 seconds. <span id="lastRefreshTime"></span></p>
+        </div>
+
+        <section class="summary-grid" aria-label="Financial summary">
+            <article class="summary-card">
+                <span>Monthly gross income</span>
+                <strong id="monthlyIncomeTotal">$0.00</strong>
+            </article>
+            <article class="summary-card">
+                <span>Yearly gross income</span>
+                <strong id="yearlyIncomeTotal">$0.00</strong>
+            </article>
+            <article class="summary-card">
+                <span>Current debt</span>
+                <strong id="debtTotal">$0.00</strong>
+            </article>
+            <article class="summary-card">
+                <span>Minimum payments</span>
+                <strong id="minimumPaymentTotal">$0.00</strong>
+            </article>
+        </section>
+
+        <section class="content-grid">
+            <article class="panel">
+                <div class="panel-heading">
+                    <div>
+                        <h2>Account</h2>
+                        <p class="muted">Update profile details or account status.</p>
+                    </div>
+                </div>
+                <form id="accountForm" class="form-grid two-column">
+                    <label>First name
+                        <input id="accountFirstName" name="firstName" required>
+                    </label>
+                    <label>Last name
+                        <input id="accountLastName" name="lastName" required>
+                    </label>
+                    <label>Username
+                        <input id="accountUsername" name="username" required>
+                    </label>
+                    <label>Email
+                        <input id="accountEmail" name="email" type="email" required>
+                    </label>
+                    <label class="span-two">New password, optional
+                        <input id="accountPassword" name="password" type="password" minlength="8">
+                    </label>
+                    <label class="checkbox-row span-two">
+                        <input id="accountActive" name="active" type="checkbox">
+                        Account active
+                    </label>
+                    <div class="button-row span-two">
+                        <button class="button" type="submit">Save account</button>
+                        <button id="deleteAccountButton" class="button button-danger" type="button">Delete account</button>
+                    </div>
+                </form>
+            </article>
+
+            <article class="panel">
+                <div class="panel-heading">
+                    <div>
+                        <h2>Gross income</h2>
+                        <p class="muted">Add monthly or yearly gross income.</p>
+                    </div>
+                </div>
+                <form id="incomeForm" class="form-grid two-column compact-form">
+                    <label>Income source
+                        <input name="source" placeholder="Primary job" required>
+                    </label>
+                    <label>Gross amount
+                        <input name="grossAmount" type="number" min="0.01" step="0.01" placeholder="72000" required>
+                    </label>
+                    <label>Frequency
+                        <select name="frequency" required>
+                            <option value="YEARLY">Yearly</option>
+                            <option value="MONTHLY">Monthly</option>
+                        </select>
+                    </label>
+                    <label>Effective date
+                        <input name="effectiveDate" type="date">
+                    </label>
+                    <button class="button span-two" type="submit">Add income</button>
+                </form>
+                <div id="incomeList" class="record-list"></div>
+            </article>
+        </section>
+
+        <section class="panel">
+            <div class="panel-heading">
+                <div>
+                    <h2>Debt accounts</h2>
+                    <p class="muted">Add debt, record payments, or remove an account.</p>
+                </div>
+            </div>
+            <form id="debtForm" class="form-grid debt-form">
+                <label>Debt name
+                    <input name="debtName" placeholder="Visa card" required>
+                </label>
+                <label>Debt type
+                    <select name="debtType" required>
+                        <option value="CREDIT_CARD">Credit card</option>
+                        <option value="STUDENT_LOAN">Student loan</option>
+                        <option value="AUTO_LOAN">Auto loan</option>
+                        <option value="MORTGAGE">Mortgage</option>
+                        <option value="PERSONAL_LOAN">Personal loan</option>
+                        <option value="MEDICAL">Medical</option>
+                        <option value="OTHER">Other</option>
+                    </select>
+                </label>
+                <label>Current balance
+                    <input name="balance" type="number" min="0.01" step="0.01" placeholder="3000" required>
+                </label>
+                <label>Interest rate %
+                    <input name="interestRate" type="number" min="0" step="0.001" placeholder="22">
+                </label>
+                <label>Minimum payment
+                    <input name="minimumPayment" type="number" min="0" step="0.01" placeholder="90">
+                </label>
+                <label>Due date
+                    <input name="dueDate" type="date">
+                </label>
+                <button class="button" type="submit">Add debt</button>
+            </form>
+            <div id="debtList" class="record-list debt-list"></div>
+        </section>
+    </section>
+</main>
+
+<footer>
+    Course prototype. Security demo includes registration, JWT authentication, role authorization, and password reset tokens.
+</footer>
+<script src="app.js"></script>
+</body>
+</html>

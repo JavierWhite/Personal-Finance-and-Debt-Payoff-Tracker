@@ -1,0 +1,33 @@
+server:
+  port: 8081
+
+spring:
+  datasource:
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/finance_users?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC
+    username: ${DB_USER:finance_user}
+    password: ${DB_PASSWORD:finance_password}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+  sql:
+    init:
+      mode: never
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+
+finance:
+  security:
+    issuer: personal-finance-tracker
+    jwt-secret: ${JWT_SECRET:dev-only-change-this-secret-key-for-class-demo}
+    token-minutes: ${JWT_TOKEN_MINUTES:120}

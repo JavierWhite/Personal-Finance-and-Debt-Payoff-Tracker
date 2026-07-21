@@ -25,6 +25,9 @@
         <module>retirement-service</module>
         <module>analytics-service</module>
         <module>frontend-service</module>
+    
+        <module>eureka-server</module>
+        <module>api-gateway</module>
     </modules>
 
     <properties>

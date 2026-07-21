@@ -1,0 +1,126 @@
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: finance-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpass}
+      FINANCE_DB_USER: ${FINANCE_DB_USER:-finance_user}
+      FINANCE_DB_PASSWORD: ${FINANCE_DB_PASSWORD:-finance_password}
+    ports:
+      - "3306:3306"
+    volumes:
+      - finance-mysql-data:/var/lib/mysql
+      - ./mysql-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p${MYSQL_ROOT_PASSWORD:-rootpass}"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+
+  config-service:
+    build:
+      context: .
+      dockerfile: config-service/Dockerfile
+    container_name: finance-config-service
+    ports:
+      - "8888:8888"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8888/actuator/health | grep UP || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+
+  user-account-service:
+    build:
+      context: .
+      dockerfile: user-account-service/Dockerfile
+    container_name: finance-user-account-service
+    environment: &service-environment
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      CONFIG_SERVER_URL: http://config-service:8888
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: ${FINANCE_DB_USER:-finance_user}
+      DB_PASSWORD: ${FINANCE_DB_PASSWORD:-finance_password}
+      JWT_SECRET: ${JWT_SECRET:-dev-only-change-this-secret-key-for-class-demo}
+      JWT_TOKEN_MINUTES: ${JWT_TOKEN_MINUTES:-120}
+    ports:
+      - "8081:8081"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      config-service:
+        condition: service_healthy
+
+  debt-service:
+    expose:
+      - "8082"
+    build:
+      context: .
+      dockerfile: debt-service/Dockerfile
+    environment: *service-environment
+    depends_on:
+      mysql:
+        condition: service_healthy
+      config-service:
+        condition: service_healthy
+
+  savings-service:
+    build:
+      context: .
+      dockerfile: savings-service/Dockerfile
+    container_name: finance-savings-service
+    environment: *service-environment
+    ports:
+      - "8083:8083"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      config-service:
+        condition: service_healthy
+
+  retirement-service:
+    build:
+      context: .
+      dockerfile: retirement-service/Dockerfile
+    container_name: finance-retirement-service
+    environment: *service-environment
+    ports:
+      - "8084:8084"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      config-service:
+        condition: service_healthy
+
+  analytics-service:
+    build:
+      context: .
+      dockerfile: analytics-service/Dockerfile
+    container_name: finance-analytics-service
+    environment: *service-environment
+    ports:
+      - "8085:8085"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      config-service:
+        condition: service_healthy
+
+
+  frontend-service:
+    build:
+      context: .
+      dockerfile: frontend-service/Dockerfile
+    container_name: finance-frontend-service
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      CONFIG_SERVER_URL: http://config-service:8888
+    ports:
+      - "8080:8080"
+    depends_on:
+      - user-account-service
+      - debt-service
+
+volumes:
+  finance-mysql-data:

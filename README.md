@@ -1,304 +1,466 @@
-# Personal Finance and Debt Payoff Tracker
+# Personal Finance Microservices Upgrade
 
-A Spring Boot microservices prototype for manually tracking user accounts, gross income, debts, debt payments, savings goals, retirement accounts, and monthly financial snapshots.
+This overlay adds the missing presentation components without replacing the existing finance entities, repositories, services, controllers, security module, database, or frontend.
 
-The project includes REST APIs, a Postman collection, centralized configuration, Docker Compose deployment, and a small web dashboard for account, income, and debt operations.
+## Added components
 
-## Checkpoint 2 security features
+- Eureka discovery server on port `8761`
+- Spring Cloud Gateway on port `8090`
+- Gateway routes that use `lb://service-name`
+- Bearer-token forwarding through the gateway
+- Safe token fingerprint logging, without logging the JWT itself
+- Eureka clients for the existing Spring services
+- Analytics-to-Debt service call using a load-balanced `RestClient`
+- Bearer-token forwarding from Analytics to Debt Service
+- Resilience4j circuit breaker and fallback for the Analytics-to-Debt call
+- Debt Service instance endpoint for showing load distribution
+- Gatling test that runs through the gateway
+- A generated Compose file for scaling Debt Service to multiple instances
 
-The application now includes the Week 11 security requirements:
+The frontend remains on `http://localhost:8080`. The gateway uses `http://localhost:8090` so the current frontend port does not need to change.
 
-1. User registration
-2. Authentication with username and password
-3. JWT token creation after login or registration
-4. Authorization with user and admin roles
-5. Password reminder and reset token flow
-6. BCrypt password hashing
-7. Protected REST endpoints across the business services
+## Assumptions
 
-Development users:
+The overlay matches the current project structure shown in the existing build output:
 
-```text
-Regular user:
-Username: javier
-Password: Password123!
+- Maven group: `com.javier.finance`
+- Root artifact: `personal-finance-debt-tracker`
+- Version: `0.0.1-SNAPSHOT`
+- Java 17
+- Spring Boot 3.5.x
+- Existing packages under `com.javier.finance.analytics` and `com.javier.finance.debt`
+- Existing login endpoint: `POST /auth/login`
+- Login response contains `token` and `id`
+- Existing protected Debt endpoint: `GET /debts/user/{userId}`
 
-Admin user:
-Username: admin
-Password: Password123!
+## Install into the working repository
+
+Extract this upgrade archive somewhere outside the repository, then run the installer with the repository path.
+
+```bash
+cd ~/Downloads/personal-finance-microservices-upgrade
+./apply-microservices-upgrade.sh ~/Projects/personal-finance-debt-tracker
 ```
 
-The password reminder endpoint returns the reset token in the response for classroom demonstration. In a production system, the token would be sent by email instead.
+For the Checkpoint 2 copy instead:
 
-## Services
-
-| Service | Port | Responsibility |
-|---|---:|---|
-| Frontend Service | 8080 | Static web dashboard |
-| Config Service | 8888 | Central dev and prod configuration |
-| User Account Service | 8081 | Accounts, registration, login, password reset, profiles, and income records |
-| Debt Service | 8082 | Debt accounts and payments |
-| Savings Service | 8083 | Savings goals and contributions |
-| Retirement Service | 8084 | Retirement accounts, contributions, and projections |
-| Analytics Service | 8085 | Monthly snapshots and chart-ready data |
-| MySQL | 3306 | Five service-owned databases |
-
-## Architecture
-
-Each business microservice uses the required stack:
-
-1. JPA entities saved in MySQL
-2. Spring Data repositories
-3. Service classes for business logic
-4. REST controllers for CRUD operations
-
-The shared `security-common` module provides JWT validation and helper authorization logic. Each protected service imports that module and applies stateless Spring Security.
-
-## Authorization model
-
-The system uses two roles:
-
-```text
-USER
-ADMIN
+```bash
+./apply-microservices-upgrade.sh ~/claude/Checkpoint2/personal-finance-debt-tracker
 ```
 
-Authorization rules:
+The installer:
 
-- A regular user can access only records that match their own `userId`.
-- An admin can list all users and access records across users.
-- Public endpoints are limited to registration, login, password reminder, password reset, and health checks.
-- All tracker endpoints require a Bearer token.
+1. Copies the new modules and source files.
+2. Adds `eureka-server` and `api-gateway` to the Maven reactor.
+3. Adds Spring Cloud `2025.0.3` dependency management.
+4. Adds Eureka client dependencies to the existing Spring services.
+5. Adds LoadBalancer, Resilience4j, and AOP dependencies to Analytics Service.
+6. Creates backups under `.microservices-upgrade-backup/`.
 
-Example protected request header:
-
-```text
-Authorization: Bearer <jwt-token>
-```
-
-## Web dashboard features
-
-Open this URL after the containers start:
-
-```text
-http://localhost:8080
-```
-
-The dashboard supports:
-
-- Register a new account
-- Sign in with username and password
-- Request a password reminder token
-- Reset a password with a reset token
-- Update profile details and account status
-- Delete an account
-- Add and remove gross income records
-- Store income as monthly or yearly gross income
-- Display normalized monthly and yearly income totals
-- Add and remove debt accounts
-- Record debt payments
-- Display total debt and minimum payments
-
-## Run with Docker Compose
+## Build the project before Docker
 
 From the repository root:
 
-```powershell
-docker compose up --build
+```bash
+mvn clean package -DskipTests
 ```
 
-To start with a clean development database:
+This catches Java or Maven errors before Docker rebuilds every image.
 
-```powershell
-docker compose down -v
-docker compose up --build
+## Start the normal discovery stack
+
+```bash
+docker compose down
+
+docker compose \
+  -f docker-compose.yml \
+  -f docker-compose.discovery.yml \
+  up -d --build
 ```
 
-## Verify services
+Wait for the applications:
+
+```bash
+scripts/wait-for-discovery-stack.sh
+```
+
+Check the containers:
+
+```bash
+docker compose \
+  -f docker-compose.yml \
+  -f docker-compose.discovery.yml \
+  ps
+```
+
+## URLs
 
 ```text
-http://localhost:8888/actuator/health
-http://localhost:8080/actuator/health
-http://localhost:8081/actuator/health
-http://localhost:8082/actuator/health
-http://localhost:8083/actuator/health
-http://localhost:8084/actuator/health
-http://localhost:8085/actuator/health
+Frontend:       http://localhost:8080
+API Gateway:    http://localhost:8090
+Eureka:         http://localhost:8761
+Config Service: http://localhost:8888
 ```
 
-Each service should return:
+Gateway health:
+
+```bash
+curl -s http://localhost:8090/actuator/health
+```
+
+Gateway routes:
+
+```bash
+curl -s http://localhost:8090/actuator/gateway/routes | python3 -m json.tool
+```
+
+## Get a bearer token through the gateway
+
+Run the script with `source` so the exported variables remain in your terminal:
+
+```bash
+source scripts/login-and-export.sh
+```
+
+Defaults:
+
+```text
+Username: javier
+Password: Password123!
+```
+
+Override the credentials when needed:
+
+```bash
+FINANCE_USERNAME=admin \
+FINANCE_PASSWORD='Password123!' \
+source scripts/login-and-export.sh
+```
+
+Confirm the token is set without printing it:
+
+```bash
+echo "TOKEN length: ${#TOKEN}"
+echo "USER_ID: $USER_ID"
+```
+
+## Show a protected request through the gateway
+
+```bash
+curl -i \
+  -H "Authorization: Bearer $TOKEN" \
+  "http://localhost:8090/api/debts/user/$USER_ID"
+```
+
+The gateway removes `/api` and routes the request to `lb://debt-service` through Eureka.
+
+Show the unauthorized result by removing the token:
+
+```bash
+curl -i "http://localhost:8090/api/debts/user/$USER_ID"
+```
+
+Expected result: `401 Unauthorized` from the protected Debt Service.
+
+## Prove that the bearer token crosses services
+
+Run:
+
+```bash
+scripts/demo-token-relay.sh
+```
+
+Request path:
+
+```text
+Client
+  -> API Gateway
+  -> Analytics Service
+  -> Debt Service
+```
+
+The gateway forwards the original `Authorization` header. Analytics receives the header and sends the same bearer token on its load-balanced call to `http://debt-service/debts/user/{userId}`.
+
+Inspect these response headers:
+
+```text
+X-Token-Relay: forwarded
+X-Token-Fingerprint: <12-character fingerprint>
+X-Gateway-Token-Fingerprint-Seen: <same fingerprint>
+X-Resilience-Status: UP
+```
+
+The fingerprint is derived from SHA-256 and is only used for the classroom demonstration. The full token is never logged or returned.
+
+Also inspect Gateway logs:
+
+```bash
+docker logs finance-api-gateway --tail 50
+```
+
+You should see a safe message similar to:
+
+```text
+Relaying bearer token fingerprint=1a2b3c4d5e6f path=/api/analytics/demo/debts/1
+```
+
+## Show Eureka service discovery
+
+Open:
+
+```text
+http://localhost:8761
+```
+
+Expected registered applications include:
+
+```text
+API-GATEWAY
+CONFIG-SERVICE
+USER-ACCOUNT-SERVICE
+DEBT-SERVICE
+SAVINGS-SERVICE
+RETIREMENT-SERVICE
+ANALYTICS-SERVICE
+FRONTEND-SERVICE
+```
+
+The exact capitalization is controlled by Eureka.
+
+## Scale Debt Service to three instances
+
+Your original Compose file publishes Debt Service on host port `8082` and assigns a fixed `container_name`. Both settings prevent multiple instances.
+
+Generate a separate scaling Compose file. This leaves your original file unchanged:
+
+```bash
+python3 upgrade-tools/make_scale_compose.py
+```
+
+Start the scaled stack:
+
+```bash
+docker compose \
+  -f docker-compose.scale.yml \
+  -f docker-compose.discovery.yml \
+  up -d --build --scale debt-service=3
+```
+
+The generated file removes the fixed Debt Service container name and published host port. Debt Service remains reachable through Gateway port `8090`.
+
+Refresh Eureka and confirm that `DEBT-SERVICE` has three instances.
+
+Show requests reaching different instances:
+
+```bash
+source scripts/login-and-export.sh
+REQUEST_COUNT=15 scripts/show-load-balancing.sh
+```
+
+The JSON response includes:
 
 ```json
 {
-  "status": "UP"
+  "service": "debt-service",
+  "instance": "container-hostname",
+  "port": "8082",
+  "tokenFingerprint": "1a2b3c4d5e6f",
+  "gatewayFingerprint": "1a2b3c4d5e6f"
 }
 ```
 
-## Dev and prod profiles
+The `instance` value should change as Spring Cloud LoadBalancer selects registered Debt Service instances.
 
-The Config Service stores dev and prod configuration files for the business services and frontend service.
+## Show resilience
 
-Dev profile:
-
-- `ddl-auto=update`
-- SQL logging enabled
-- Seed data enabled
-- Local default database credentials
-- Development JWT secret and token lifetime defaults
-
-Prod profile:
-
-- `ddl-auto=validate`
-- SQL logging disabled
-- Seed data disabled
-- Database credentials supplied through environment variables
-- JWT secret supplied through environment variables
-
-Run dev in Windows PowerShell:
-
-```powershell
-$env:SPRING_PROFILES_ACTIVE = "dev"
-docker compose up --build
-```
-
-Run dev in WSL or Linux Bash:
+Keep Analytics Service running and stop all Debt Service instances:
 
 ```bash
-export SPRING_PROFILES_ACTIVE=dev
-docker compose up --build
+docker compose \
+  -f docker-compose.scale.yml \
+  -f docker-compose.discovery.yml \
+  stop debt-service
 ```
 
-Or use the one-line WSL/Bash command:
+Call the cross-service endpoint several times:
 
 ```bash
-SPRING_PROFILES_ACTIVE=dev docker compose up --build
+for attempt in 1 2 3 4 5; do
+  curl -i -s \
+    -H "Authorization: Bearer $TOKEN" \
+    "http://localhost:8090/api/analytics/demo/debts/$USER_ID" \
+    | grep -E "HTTP/|X-Resilience-Status|DEGRADED|temporarily"
+  echo
+  sleep 1
+done
 ```
 
-Run prod after the schema exists in Windows PowerShell:
+Expected behavior:
 
-```powershell
-$env:SPRING_PROFILES_ACTIVE = "prod"
-$env:FINANCE_DB_USER = "finance_user"
-$env:FINANCE_DB_PASSWORD = "finance_password"
-$env:JWT_SECRET = "replace-with-a-long-random-secret"
-docker compose up --build
-```
+- Analytics does not expose a raw connection exception.
+- The response remains controlled.
+- `X-Resilience-Status` changes to `DEGRADED`.
+- The JSON body identifies `debt-service` as unavailable.
+- After repeated failures, the Resilience4j circuit breaker opens.
 
-Run prod after the schema exists in WSL or Linux Bash:
+Check circuit breaker health:
 
 ```bash
-export SPRING_PROFILES_ACTIVE=prod
-export FINANCE_DB_USER=finance_user
-export FINANCE_DB_PASSWORD=finance_password
-export JWT_SECRET=replace-with-a-long-random-secret
-docker compose up --build
+curl -s http://localhost:8085/actuator/health | python3 -m json.tool
 ```
 
-Do not remove the MySQL volume before switching from dev to prod because the prod profile validates an existing schema.
+Restart Debt Service:
 
-## Main REST endpoints
+```bash
+docker compose \
+  -f docker-compose.scale.yml \
+  -f docker-compose.discovery.yml \
+  up -d --scale debt-service=3 debt-service
+```
 
-### Authentication
+Wait at least 10 seconds, then call the relay endpoint again. `X-Resilience-Status` should return to `UP` after the circuit breaker completes its half-open recovery checks.
+
+## Run the Gatling stress test
+
+The test performs this path for each virtual user:
+
+1. Log in through Gateway.
+2. Save the JWT and user ID.
+3. Read debts through Gateway.
+4. Call Analytics, which relays the JWT to Debt Service.
+5. Request the Debt Service instance endpoint.
+
+Run the default test:
+
+```bash
+mvn -f performance-tests/pom.xml gatling:test \
+  -Dusername=javier \
+  -Dpassword='Password123!'
+```
+
+Default load profile:
 
 ```text
-POST /auth/register
-POST /auth/login
-POST /auth/password-reminder
-POST /auth/password-reset
+Ramp: 20 users over 20 seconds
+Steady: 10 users per second for 30 seconds
+Peak ramp: 10 to 30 users per second over 30 seconds
 ```
 
-### User accounts
+Default assertions:
 
 ```text
-POST   /users
-GET    /users
-GET    /users/{id}
-PUT    /users/{id}
-DELETE /users/{id}
+Failed requests below 1 percent
+95th percentile response time below 800 milliseconds
 ```
 
-`GET /users` is admin-only.
+Use lower values for the first local run:
 
-### Income
+```bash
+mvn -f performance-tests/pom.xml gatling:test \
+  -DrampUsers=5 \
+  -DsteadyUsersPerSecond=2 \
+  -DpeakUsersPerSecond=5 \
+  -Dp95Ms=1500
+```
+
+Reports are generated under:
 
 ```text
-POST   /incomes
-GET    /incomes
-GET    /incomes/user/{userId}
-GET    /incomes/{id}
-PUT    /incomes/{id}
-DELETE /incomes/{id}
+performance-tests/target/gatling/
 ```
 
-`GET /incomes` is admin-only.
-
-### Debt
+Compare these two runs without changing the load profile:
 
 ```text
-POST   /debts
-GET    /debts
-GET    /debts/user/{userId}
-GET    /debts/{id}
-PUT    /debts/{id}
-DELETE /debts/{id}
-POST   /debts/{id}/payments
+Run A: one Debt Service instance
+Run B: three Debt Service instances
 ```
 
-`GET /debts` is admin-only.
+Record total requests, requests per second, mean response time, p95, p99, and failed-request percentage.
 
-Savings, retirement, and analytics endpoints are also protected by the same JWT and user ownership rules.
+## Return to the original one-instance setup
 
-## Postman
+```bash
+docker compose \
+  -f docker-compose.scale.yml \
+  -f docker-compose.discovery.yml \
+  down
 
-Import:
+docker compose \
+  -f docker-compose.yml \
+  -f docker-compose.discovery.yml \
+  up -d --build
+```
+
+## Troubleshooting
+
+### Eureka opens, but no services appear
+
+Check a service log:
+
+```bash
+docker logs finance-debt-service --tail 100
+```
+
+Search for Eureka registration errors:
+
+```bash
+docker compose \
+  -f docker-compose.yml \
+  -f docker-compose.discovery.yml \
+  logs | grep -iE "eureka|discovery|registration|refused"
+```
+
+### Gateway returns 503
+
+A `503` means the gateway route matched, but Eureka did not provide a usable service instance.
+
+Check:
+
+```bash
+curl -s http://localhost:8761/eureka/apps | head
+curl -s http://localhost:8090/actuator/gateway/routes | python3 -m json.tool
+```
+
+### Gateway returns 404
+
+Confirm that you are using Gateway port `8090` and the `/api` prefix:
 
 ```text
-postman/Personal-Finance-Tracker.postman_collection.json
+Correct: http://localhost:8090/api/debts/user/1
+Frontend: http://localhost:8080
 ```
 
-The collection includes:
+### Gateway returns 401
 
-- Login as regular user
-- Register a demo user
-- Request a password reminder token
-- Reset a password
-- Show a regular user blocked from an admin-only endpoint
-- Login as admin
-- Show the admin listing users
-- Run the finance tracker workflow with the regular user token
+Refresh the token:
 
-The collection stores `authToken`, `adminToken`, `resetToken`, `userId`, and created resource IDs as collection variables.
-
-## Build without Docker
-
-Java 17 and Maven are required.
-
-```powershell
-mvn clean package
+```bash
+source scripts/login-and-export.sh
 ```
 
-Run Config Service first, followed by the required business services and Frontend Service.
+### Maven compatibility error
 
-## Repository layout
+The patch uses Spring Cloud `2025.0.3` for Spring Boot `3.5.x`. Confirm the root parent version:
+
+```bash
+grep -nA2 -B2 "spring-boot-starter-parent" pom.xml
+```
+
+### Package not found during compilation
+
+The added classes assume these package roots:
 
 ```text
-analytics-service/
-config-service/
-debt-service/
-frontend-service/
-mysql-init/
-postman/
-retirement-service/
-savings-service/
-security-common/
-user-account-service/
-docker-compose.yml
-pom.xml
-README.md
+com.javier.finance.analytics
+com.javier.finance.debt
 ```
 
-## UI refresh and input checks
+Confirm the current application classes:
 
-The browser dashboard refreshes after account, income, and debt changes. It also performs a background refresh every 15 seconds while a user is signed in and refreshes again when the browser window regains focus.
+```bash
+find analytics-service/src/main/java -name '*Application.java' -print
+find debt-service/src/main/java -name '*Application.java' -print
+```
 
-The backend uses Spring Data JPA repository methods instead of hand-written SQL string concatenation. This keeps database parameters bound by the persistence layer. The services also trim and validate free-text fields, reject SQL comment markers, statement terminators, and common injection phrases, and enforce length limits on user-entered strings. The frontend runs the same basic text check before sending account, income, and debt requests.
+Move the added `integration` or `demo` packages under the actual application package if your local copy uses a different package name.

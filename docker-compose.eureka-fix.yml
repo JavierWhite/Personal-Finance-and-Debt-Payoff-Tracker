@@ -1,0 +1,35 @@
+services:
+  api-gateway:
+    environment:
+      SPRING_APPLICATION_JSON: >-
+        {"eureka":{"client":{"serviceUrl":{"defaultZone":"http://eureka-server:8761/eureka/"}}}}
+
+  config-service:
+    environment:
+      SPRING_APPLICATION_JSON: >-
+        {"eureka":{"client":{"serviceUrl":{"defaultZone":"http://eureka-server:8761/eureka/"}}}}
+
+  user-account-service:
+    environment:
+      SPRING_APPLICATION_JSON: >-
+        {"eureka":{"client":{"serviceUrl":{"defaultZone":"http://eureka-server:8761/eureka/"}}}}
+
+  debt-service:
+    environment:
+      SPRING_APPLICATION_JSON: >-
+        {"eureka":{"client":{"serviceUrl":{"defaultZone":"http://eureka-server:8761/eureka/"}}}}
+
+  savings-service:
+    environment:
+      SPRING_APPLICATION_JSON: >-
+        {"eureka":{"client":{"serviceUrl":{"defaultZone":"http://eureka-server:8761/eureka/"}}}}
+
+  retirement-service:
+    environment:
+      SPRING_APPLICATION_JSON: >-
+        {"eureka":{"client":{"serviceUrl":{"defaultZone":"http://eureka-server:8761/eureka/"}}}}
+
+  analytics-service:
+    environment:
+      SPRING_APPLICATION_JSON: >-
+        {"eureka":{"client":{"serviceUrl":{"defaultZone":"http://eureka-server:8761/eureka/"}}}}

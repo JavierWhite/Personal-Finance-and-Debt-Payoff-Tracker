@@ -1,0 +1,64 @@
+server:
+  port: 8090
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      server:
+        webflux:
+          httpclient:
+            connect-timeout: 2000
+            response-timeout: 8s
+          routes:
+            - id: user-account-api
+              uri: lb://user-account-service
+              predicates:
+                - Path=/api/auth/**,/api/users/**,/api/incomes/**
+              filters:
+                - StripPrefix=1
+            - id: debt-api
+              uri: lb://debt-service
+              predicates:
+                - Path=/api/debts/**
+              filters:
+                - StripPrefix=1
+            - id: savings-api
+              uri: lb://savings-service
+              predicates:
+                - Path=/api/savings-goals/**
+              filters:
+                - StripPrefix=1
+            - id: retirement-api
+              uri: lb://retirement-service
+              predicates:
+                - Path=/api/retirement-accounts/**
+              filters:
+                - StripPrefix=1
+            - id: analytics-api
+              uri: lb://analytics-service
+              predicates:
+                - Path=/api/analytics/**
+              filters:
+                - StripPrefix=1
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway
+  endpoint:
+    health:
+      probes:
+        enabled: true
+    gateway:
+      access: read-only
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://localhost:8761/eureka/}
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${HOSTNAME:${random.value}}:${server.port}

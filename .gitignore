@@ -1,10 +1,27 @@
-**/target/
-.idea/
-.vscode/
-*.iml
+# Environment files and secrets
 .env
-.DS_Store
-*:Zone.Identifier
-.gateway*
-.microservice*
 .env.aws
+.env.*
+!.env.example
+!.env.aws.example
+
+# Private keys and certificates
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+
+# Password / credential files
+passwords
+passwords/
+passwords.txt
+credentials
+credentials/
+credentials.txt
+
+# Maven build output
+target/
+
+# Gatling generated output
+performance-tests/target/

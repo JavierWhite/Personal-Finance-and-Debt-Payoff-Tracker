@@ -1,0 +1,65 @@
+
+services:
+  zipkin:
+    image: openzipkin/zipkin:3.6.1
+    container_name: finance-zipkin
+    restart: unless-stopped
+    ports:
+      - "9411:9411"
+
+  api-gateway:
+    restart: unless-stopped
+    environment:
+      ZIPKIN_ENDPOINT: http://zipkin:9411/api/v2/spans
+      TRACING_SAMPLING_PROBABILITY: "1.0"
+    depends_on:
+      zipkin:
+        condition: service_started
+
+  user-account-service:
+    restart: unless-stopped
+    environment:
+      ZIPKIN_ENDPOINT: http://zipkin:9411/api/v2/spans
+      TRACING_SAMPLING_PROBABILITY: "1.0"
+    depends_on:
+      zipkin:
+        condition: service_started
+
+  debt-service:
+    restart: unless-stopped
+    environment:
+      ACTIVEMQ_BROKER_URL: ${ACTIVEMQ_BROKER_URL:?Set the Amazon MQ OpenWire SSL endpoint}
+      SPRING_ACTIVEMQ_USER: ${ACTIVEMQ_USER:?Set the Amazon MQ application username}
+      SPRING_ACTIVEMQ_PASSWORD: ${ACTIVEMQ_PASSWORD:?Set the Amazon MQ application password}
+      DEBT_PAYMENT_QUEUE: finance.debt.payment.recorded
+      ZIPKIN_ENDPOINT: http://zipkin:9411/api/v2/spans
+      TRACING_SAMPLING_PROBABILITY: "1.0"
+    depends_on:
+      zipkin:
+        condition: service_started
+
+  analytics-service:
+    restart: unless-stopped
+    environment:
+      ACTIVEMQ_BROKER_URL: ${ACTIVEMQ_BROKER_URL:?Set the Amazon MQ OpenWire SSL endpoint}
+      SPRING_ACTIVEMQ_USER: ${ACTIVEMQ_USER:?Set the Amazon MQ application username}
+      SPRING_ACTIVEMQ_PASSWORD: ${ACTIVEMQ_PASSWORD:?Set the Amazon MQ application password}
+      DEBT_PAYMENT_QUEUE: finance.debt.payment.recorded
+      ZIPKIN_ENDPOINT: http://zipkin:9411/api/v2/spans
+      TRACING_SAMPLING_PROBABILITY: "1.0"
+    depends_on:
+      zipkin:
+        condition: service_started
+
+  config-service:
+    restart: unless-stopped
+  eureka-server:
+    restart: unless-stopped
+  savings-service:
+    restart: unless-stopped
+  retirement-service:
+    restart: unless-stopped
+  frontend-service:
+    restart: unless-stopped
+  mysql:
+    restart: unless-stopped

@@ -5,3 +5,16 @@ spring:
     active: ${SPRING_PROFILES_ACTIVE:dev}
   config:
     import: "optional:configserver:${CONFIG_SERVER_URL:http://localhost:8888}"
+
+management:
+  tracing:
+    sampling:
+      probability: ${TRACING_SAMPLING_PROBABILITY:1.0}
+  zipkin:
+    tracing:
+      endpoint: ${ZIPKIN_ENDPOINT:http://localhost:9411/api/v2/spans}
+
+logging:
+  pattern:
+    correlation: "[${spring.application.name:},%X{traceId:-},%X{spanId:-}] "
+  include-application-name: false

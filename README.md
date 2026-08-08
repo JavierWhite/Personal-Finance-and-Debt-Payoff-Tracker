@@ -1,5 +1,16 @@
 # Personal Finance Microservices Upgrade
 
+## Checkpoint 3: AWS, JMS, tracing, and Gatling
+
+The Checkpoint 3 implementation and demo instructions are in:
+
+- `CHECKPOINT3-RUNBOOK.md`
+- `AWS-DEPLOYMENT-GUIDE.md`
+- `CHECKPOINT3-PRESENTATION-GUIDE.md`
+
+The new asynchronous path is Debt Service -> JMS/ActiveMQ -> Analytics Service. Zipkin collects HTTP and JMS traces while the Gatling test records debt payments under load.
+
+
 This overlay adds the missing presentation components without replacing the existing finance entities, repositories, services, controllers, security module, database, or frontend.
 
 ## Added components
@@ -75,6 +86,7 @@ docker compose down
 docker compose \
   -f docker-compose.yml \
   -f docker-compose.discovery.yml \
+  -f docker-compose.eureka-fix.yml \
   up -d --build
 ```
 
@@ -90,6 +102,7 @@ Check the containers:
 docker compose \
   -f docker-compose.yml \
   -f docker-compose.discovery.yml \
+  -f docker-compose.eureka-fix.yml \
   ps
 ```
 
@@ -243,6 +256,7 @@ Start the scaled stack:
 docker compose \
   -f docker-compose.scale.yml \
   -f docker-compose.discovery.yml \
+  -f docker-compose.eureka-fix.yml \
   up -d --build --scale debt-service=3
 ```
 
@@ -389,6 +403,7 @@ docker compose \
 docker compose \
   -f docker-compose.yml \
   -f docker-compose.discovery.yml \
+  -f docker-compose.eureka-fix.yml \
   up -d --build
 ```
 

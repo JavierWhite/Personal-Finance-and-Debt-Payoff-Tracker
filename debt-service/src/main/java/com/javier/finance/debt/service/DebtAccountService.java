@@ -1,8 +1,10 @@
 package com.javier.finance.debt.service;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 
 import com.javier.finance.security.InputSecurityValidator;
 import org.springframework.stereotype.Service;
@@ -14,6 +16,8 @@ import com.javier.finance.debt.entity.DebtAccount;
 import com.javier.finance.debt.entity.DebtPayment;
 import com.javier.finance.debt.entity.DebtStatus;
 import com.javier.finance.debt.exception.ResourceNotFoundException;
+import com.javier.finance.debt.messaging.DebtPaymentEventPublisher;
+import com.javier.finance.debt.messaging.DebtPaymentRecordedEvent;
 import com.javier.finance.debt.repository.DebtAccountRepository;
 import com.javier.finance.debt.repository.DebtPaymentRepository;
 
@@ -22,10 +26,15 @@ import com.javier.finance.debt.repository.DebtPaymentRepository;
 public class DebtAccountService {
     private final DebtAccountRepository debtRepository;
     private final DebtPaymentRepository paymentRepository;
+    private final DebtPaymentEventPublisher paymentEventPublisher;
 
-    public DebtAccountService(DebtAccountRepository debtRepository, DebtPaymentRepository paymentRepository) {
+    public DebtAccountService(
+            DebtAccountRepository debtRepository,
+            DebtPaymentRepository paymentRepository,
+            DebtPaymentEventPublisher paymentEventPublisher) {
         this.debtRepository = debtRepository;
         this.paymentRepository = paymentRepository;
+        this.paymentEventPublisher = paymentEventPublisher;
     }
 
     public DebtAccount create(DebtAccountRequest request) {
@@ -80,7 +89,18 @@ public class DebtAccountService {
         if (newBalance.compareTo(BigDecimal.ZERO) == 0) {
             debt.setStatus(DebtStatus.PAID_OFF);
         }
-        return debtRepository.save(debt);
+
+        DebtAccount savedDebt = debtRepository.save(debt);
+        paymentEventPublisher.publish(new DebtPaymentRecordedEvent(
+                UUID.randomUUID(),
+                savedDebt.getUserId(),
+                savedDebt.getId(),
+                payment.getId(),
+                payment.getAmount(),
+                savedDebt.getCurrentBalance(),
+                payment.getPaymentDate(),
+                Instant.now()));
+        return savedDebt;
     }
 
     private void apply(DebtAccount debt, DebtAccountRequest request, boolean creating) {

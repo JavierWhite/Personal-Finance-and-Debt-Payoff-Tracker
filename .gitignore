@@ -7,3 +7,4 @@
 *:Zone.Identifier
 .gateway*
 .microservice*
+.env.aws

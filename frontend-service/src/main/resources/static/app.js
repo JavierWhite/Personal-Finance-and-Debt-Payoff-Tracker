@@ -1,8 +1,9 @@
 "use strict";
 
 const host = window.location.hostname || "localhost";
-const userApi = `${window.location.protocol}//${host}:8081`;
-const debtApi = `${window.location.protocol}//${host}:8082`;
+const gatewayApi = `${window.location.protocol}//${host}:8090/api`;
+const userApi = gatewayApi;
+const debtApi = gatewayApi;
 const sessionKey = "financeTrackerUser";
 const dashboardRefreshMs = 15000;
 let dashboardRefreshTimer = null;

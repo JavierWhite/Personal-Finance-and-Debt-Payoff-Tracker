@@ -56,7 +56,7 @@ cd ~/Downloads/personal-finance-microservices-upgrade
 For the Checkpoint 2 copy instead:
 
 ```bash
-./apply-microservices-upgrade.sh ~/claude/Checkpoint2/personal-finance-debt-tracker
+./apply-microservices-upgrade.sh ~/Checkpoint2/personal-finance-debt-tracker
 ```
 
 The installer:
